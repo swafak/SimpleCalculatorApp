@@ -5,6 +5,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import java.lang.Exception
+import java.util.Stack
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,7 +39,7 @@ class MainActivity : AppCompatActivity() {
         val subtraction = findViewById<Button>(R.id.subtract)
         val plusMinus = findViewById<Button>(R.id.plusMinus)
         val percent = findViewById<Button>(R.id.percent)
-        val delete =findViewById<Button>(R.id.cancel)
+        val delete = findViewById<Button>(R.id.cancel)
 
         clear.setOnClickListener {
             textInput.setText("")
@@ -63,23 +64,32 @@ class MainActivity : AppCompatActivity() {
             numberListener(it as Button)
         }
         two.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         three.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         four.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         five.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         six.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         seven.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         eight.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         nine.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
         zero.setOnClickListener {
-            numberListener(it as Button) }
+            numberListener(it as Button)
+        }
 
         decimalPoint.setOnClickListener {
             if (lastNumeric && !lastDot) {
@@ -153,17 +163,75 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun evaluate(expression: String): Double {
-        val parts = expression.split("[-+*/]".toRegex()).toTypedArray()
-        val operator = expression.find { it in "+-*/" } ?: return parts[0].toDouble()
-        val left = parts[0].toDouble()
-        val right = parts[1].toDouble()
-        return when (operator) {
-            '+' -> left + right
-            '-' -> left - right
-            '*' -> left * right
-            '/' -> left / right
+//    private fun evaluate(expression: String): Double {
+//        val parts = expression.split("[-+*/]".toRegex()).toTypedArray()
+//        val operator = expression.find { it in "+-*/" } ?: return parts[0].toDouble()
+//        val left = parts[0].toDouble()
+//        val right = parts[1].toDouble()
+//        return when (operator) {
+//            '+' -> left + right
+//            '-' -> left - right
+//            '*' -> left * right
+//            '/' -> left / right
+//            else -> 0.0
+//        }
+//    }
+//}
+
+
+    fun evaluate(expression: String): Double {
+        val operatorStack = Stack<Char>()
+        val valueStack = Stack<Double>()
+
+        var index = 0
+        while (index < expression.length) {
+            when (val ch = expression[index]) {
+                in '0'..'9' -> {
+                    val sb = StringBuilder()
+                    while (index < expression.length && (expression[index] in '0'..'9' || expression[index] == '.')) {
+                        sb.append(expression[index])
+                        index++
+                    }
+                    valueStack.push(sb.toString().toDouble())
+                    index-- // adjust for the next loop increment
+                }
+
+                '+', '-', '*', '/' -> {
+                    while (!operatorStack.isEmpty() && hasPrecedence(ch, operatorStack.peek())) {
+                        valueStack.push(
+                            applyOperator(
+                                operatorStack.pop(),
+                                valueStack.pop(),
+                                valueStack.pop()
+                            )
+                        )
+                    }
+                    operatorStack.push(ch)
+                }
+            }
+            index++
+        }
+
+        while (!operatorStack.isEmpty()) {
+            valueStack.push(applyOperator(operatorStack.pop(), valueStack.pop(), valueStack.pop()))
+        }
+
+        return valueStack.pop()
+    }
+
+    fun hasPrecedence(op1: Char, op2: Char): Boolean {
+        if (op2 == '(' || op2 == ')') return false
+        return (op1 != '*' && op1 != '/') || (op2 != '+' && op2 != '-')
+    }
+
+    fun applyOperator(op: Char, b: Double, a: Double): Double {
+        return when (op) {
+            '+' -> a + b
+            '-' -> a - b
+            '*' -> a * b
+            '/' -> if (b != 0.0) a / b else throw ArithmeticException("Cannot divide by zero")
             else -> 0.0
         }
     }
+
 }
